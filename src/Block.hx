@@ -20,7 +20,7 @@ class Block extends Entity
 		var r = Math.floor(Math.random() * 255);
 		var g = Math.floor(Math.random() * 255);
 		var b = Math.floor(Math.random() * 255);
-		var color = a << 32 | r << 24 | g << 16 | b << 8;
+		var color = a << 24 | r << 16 | g << 8 | b << 0;
 		return color;
 	}
 	
