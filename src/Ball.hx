@@ -1,6 +1,7 @@
 import com.haxepunk.Entity;
 import com.haxepunk.graphics.Image;
 import com.haxepunk.HXP;
+import com.haxepunk.Sfx;
 
 class Ball extends Entity
 {
@@ -16,25 +17,46 @@ class Ball extends Entity
 		reset();
 		
 		type = "ball";
+		
+		hitBlockSfx = new Sfx("sfx/hit_block.wav");
+		hitWallSfx = new Sfx("sfx/hit_walls.wav");
 	}
 	
 	public function checkCollisions()
 	{
 		if (x < 0 || x + width > GameScene.rightBorder)
 		{
-			accX *= -1;
+			rotation = normalizeAngle(180 - rotation);
+			updateAcc();
+			hitWallSfx.play();
 		}
 		
 		if (y < 0)
 		{
-			accY *= -1;
+			rotation = normalizeAngle(360 - rotation);
+			updateAcc();
+			hitWallSfx.play();
 		}
 		
 		var player = collide("player", x, y + speed);
 		if (player != null)
 		{
-			accY = -1;
-			speed += 0.3;
+			if (!collidingShip)
+			{
+				collidingShip = true;
+				// calculate the difference between the ship's center and the ball's center
+				var diff = (x - halfWidth) - (player.x + player.halfWidth);
+				
+				rotation = normalizeAngle(360 - rotation - diff);
+				updateAcc();
+				hitWallSfx.play();
+				
+				speed += 0.1;
+
+			}
+		} else
+		{
+			collidingShip = false;
 		}
 		
 		if (y > HXP.height)
@@ -43,20 +65,26 @@ class Ball extends Entity
 		}
 	}
 	
-	override public function moveCollideX(e:Entity):Bool 
+	override public function moveCollideX(e:Entity):Bool
 	{
 		scene.remove(e);
-		accX *= -1;
 		GameScene.incScore();
+		hitBlockSfx.play();
+		
+		rotation = normalizeAngle(180 - rotation);
+		updateAcc();
 		
 		return true;
 	}
 	
-	override public function moveCollideY(e:Entity):Bool 
+	override public function moveCollideY(e:Entity):Bool
 	{
 		scene.remove(e);
-		accY *= -1;
 		GameScene.incScore();
+		hitBlockSfx.play();
+		
+		rotation = normalizeAngle(360 - rotation);
+		updateAcc();
 		
 		return true;
 	}
@@ -75,16 +103,49 @@ class Ball extends Entity
 	{
 		x = initPosX;
 		y = initPosY;
-		accX = 1;
-		accY = -1;
-		speed = 2.75;
+		rotation = 45;
+		updateAcc();
+		speed = 5;
+		collidingShip = false;
 	}
 	
-	private var accX:Int;
-	private var accY:Int;
+	public function updateAcc()
+	{
+		// rotation: angles. cos and sin receive radians
+		accX = Math.cos(rotation * Math.PI / 180);
+		accY = -Math.sin(rotation * Math.PI / 180);
+	}
+	
+	public function normalizeAngle(angle:Float)
+	{
+		while (Math.abs(angle) > 360)
+		{
+			angle = angle - HXP.sign(angle) * 360;
+		}
+		
+		if (angle < 0)
+		{
+			angle = 360 + angle;
+		}
+		
+		return Math.floor(angle);
+	}
+	
+	public function getSpeed()
+	{
+		return speed;
+	}
+	
+	private var accX:Float;
+	private var accY:Float;
 	private var speed:Float;
 	private var initPosX:Float;
 	private var initPosY:Float;
+	private var rotation:Float;
+	private var collidingShip:Bool;
 	
-	private static inline var maxSpeed = 5;
+	private static inline var maxSpeed = 8;
+	
+	public static var hitBlockSfx:Sfx;
+	public static var hitWallSfx:Sfx;
 }
