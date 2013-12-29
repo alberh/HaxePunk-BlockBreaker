@@ -116,19 +116,9 @@ class Ball extends Entity
 		accY = -Math.sin(rotation * Math.PI / 180);
 	}
 	
-	public function normalizeAngle(angle:Float)
+	public inline function normalizeAngle(angle:Float)
 	{
-		while (Math.abs(angle) > 360)
-		{
-			angle = angle - HXP.sign(angle) * 360;
-		}
-		
-		if (angle < 0)
-		{
-			angle = 360 + angle;
-		}
-		
-		return Math.floor(angle);
+		return angle = angle % 360 + ((angle < 0) ? 360 : 0);
 	}
 	
 	public function getSpeed()
